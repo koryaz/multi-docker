@@ -1,0 +1,22 @@
+sudo: required
+service:
+    - docker
+
+before_install:
+    - docker build -t koryaz/koryaz/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+    - docker run -e CI=true koryaz/react-test npm test
+
+after_success:
+    - docker build -t koryaz/multi-client ./client
+    - docker build -t koryaz/multi-nginx ./nginx
+    - docker build -t koryaz/multi-server ./server
+    - docker build -t koryaz/multi-worker ./worker
+    #Login to the docker CLI
+    echo "$DOCKER_PASSWORD" | dokcer login -u "$DOCKER_ID" --password-stdin
+    #Take these images and push them to docker hub
+    - docker push koryaz/multi-client
+    - docker push koryaz/multi-nginx
+    - docker push koryaz/multi-server
+    - docker push koryaz/multi-worker
